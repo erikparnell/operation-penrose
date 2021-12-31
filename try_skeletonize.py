@@ -82,4 +82,4 @@ if __name__ == '__main__':
     plt.show()
 
     tmp = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    #cv2.imwrite('skeleton.png', tmp)
+    cv2.imwrite('skeleton.png', tmp)
