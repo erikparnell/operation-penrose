@@ -1,12 +1,12 @@
 import cv2
-import fast_utils  # run 'compile_pyxes.py' at least once, first, to use this
+#import fast_utils  # run 'compile_pyxes.py' at least once, first, before using
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.morphology import skeletonize
 
 
 def remove_skeletal_spikes(skeleton):
-    # this function is slow. fast_utils contains a C version
+    # this function is slow. fast_utils contains a C version that is faster and more advanced
 
     tmp = skeleton.copy()
     ii = np.argwhere(tmp > 0)
@@ -58,28 +58,35 @@ def draw_skeleton(img, skeleton):
 
 if __name__ == '__main__':
 
-    # 1) crop image 2) canny edge-detect 3) hand-paint-bucket fill track as white
-    img = cv2.imread('hand_edits3.png')
+    # hand-edits = manually...1) crop image 2) canny edge-detect 3) hand-paint-bucket fill track as white
+    img = cv2.imread('hand_edits2.png')
 
     # track needs to be white
     img = 255 - img
 
     skelly = skeletonize(img)
 
-    # skelly = remove_skeletal_spikes(skelly)
-    #skelly = fast_utils.remove_skeletal_spikes(skelly)
-    skelly = fast_utils.remove_skeletal_spikes(skelly, img)
+    skelly = remove_skeletal_spikes(skelly)
+    #skelly = fast_utils.remove_skeletal_spikes(skelly, img) # cython version
 
-    #img = draw_skeleton(img, skelly)
-    img = np.array(fast_utils.draw_skeleton(img, skelly))
+    # these will be the raw coordinates of the skeleton
+    skeletal_indices = np.argwhere(skelly[:, :, 1] > 0)
 
-    plt.figure(1)
-    plt.imshow(skelly)
+    np.save('skelly_points.npy', skeletal_indices)
 
-    plt.figure(2)
-    plt.imshow(img, 'gray')
-    plt.axis('off')
-    plt.show()
+    # how to load the skeletal points from disk if you want to bypass calculating skeleton each run
+    loaded_skeletal_indices = np.load('skelly_points.npy')
 
-    tmp = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    cv2.imwrite('skeleton.png', tmp)
+    img = draw_skeleton(img, skelly)
+    #img = np.array(fast_utils.draw_skeleton(img, skelly)) # cython version
+
+    #plt.figure(1)
+    #plt.imshow(skelly)
+
+    #plt.figure(2)
+    #plt.imshow(img, 'gray')
+    #plt.axis('off')
+    #plt.show()
+
+    #tmp = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    #cv2.imwrite('skeleton.png', tmp)
