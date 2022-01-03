@@ -162,6 +162,7 @@ def findenemies(img):
 
 
 def remove_background_gradient(gray_img):
+    # TODO this is too damn slow. Will optimize ... eventually
 
     rows, cols = gray_img.shape
 
@@ -198,15 +199,13 @@ def imageprep2(img):
     # level-2 preparation of image
 
     tmp_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
     tmp_img = remove_background_gradient(tmp_img)
-
     otsu_threshold, otsu_img = cv2.threshold(tmp_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
     img_out = cv2.bitwise_not(otsu_img)
 
 
     '''
+    # canny edge left gaps that didn't work well with floodfill
     edges = cv2.Canny(tmp_img, 30, 70)  # TODO remove hard-coded values?
 
     # find a single point inside the track as the seed-point for flood fill
