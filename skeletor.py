@@ -1,5 +1,5 @@
 import cv2
-#import fast_utils  # run 'compile_pyxes.py' at least once, first, before using
+import fast_utils  # run 'compile_pyxes.py' at least once, first, before using
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage.morphology import skeletonize
@@ -54,6 +54,17 @@ def draw_skeleton(img, skeleton):
                 img[r, c, 2] = 0
 
     return img
+
+
+def get_skelly(bin_img):
+
+    color_img = cv2.cvtColor(bin_img, cv2.COLOR_GRAY2BGR)
+
+    skelly = skeletonize(color_img)
+    skelly = fast_utils.remove_skeletal_spikes(skelly, color_img)
+    color_img = np.array(fast_utils.draw_skeleton(color_img, skelly))
+
+    return color_img
 
 
 if __name__ == '__main__':
