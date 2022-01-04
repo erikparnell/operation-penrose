@@ -56,12 +56,13 @@ def draw_skeleton(img, skeleton):
     return img
 
 
-def get_skelly(bin_img):
+def get_skelly(bin_img, remove_spikes=True):
 
     color_img = cv2.cvtColor(bin_img, cv2.COLOR_GRAY2BGR)
 
     skelly = skeletonize(color_img)
-    skelly = fast_utils.remove_skeletal_spikes(skelly, color_img)
+    if remove_spikes:
+        skelly = fast_utils.remove_skeletal_spikes(skelly, color_img)
     color_img = np.array(fast_utils.draw_skeleton(color_img, skelly))
 
     return color_img

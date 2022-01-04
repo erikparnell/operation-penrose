@@ -175,7 +175,6 @@ def findenemies(img):
 
 
 def remove_background_gradient(gray_img):
-    # TODO this is too damn slow. Will optimize ... eventually
 
     rows, cols = gray_img.shape
 
