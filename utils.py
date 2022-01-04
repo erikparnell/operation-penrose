@@ -1,4 +1,5 @@
 import cv2
+import fast_utils
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -12,6 +13,26 @@ class Enemy:
         self.score = 0
 
 
+def count_dots(img):
+
+    # bottom trace to determine available dots
+    trace = img[1025, np.arange(1000, 1350, 1), 0].astype(float)
+
+    midline = (np.max(trace) + np.min(trace)) / 2
+    midline = np.floor(midline) + 0.5  # ensure it's a non-integer
+
+    crosses = 0
+    previous_point = trace[0]
+    for point in trace[1::]:
+        if (previous_point - midline)*(point - midline) < 0:
+            crosses += 1
+        previous_point = point
+
+    dot_count = int(crosses / 2)
+
+    return dot_count
+
+
 def imageprep1(screen_capture):
     '''
     level-1 image preparation. This function should be run first
@@ -23,7 +44,7 @@ def imageprep1(screen_capture):
 
     # crop out outside color border
     top_left = (24, 24)
-    bottom_right = (2413, 1102)
+    bottom_right = (2413-1, 1102-1)
     img = img[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0], :]
 
     # arrow-removal
@@ -38,18 +59,7 @@ def imageprep1(screen_capture):
 
     img[top_left_arrow[1]:bottom_right_arrow[1], top_left_arrow[0]:bottom_right_arrow[0], :] = donor
 
-    # bottom trace to determine available dots
-    trace = img[1025, np.arange(1000, 1350, 1), 0]
-    half_jump = (np.max(trace) - np.min(trace)) / 2
-
-    previous_point = trace[0]
-    crosses = 0
-    for point in trace[1::]:
-        if abs(float(point) - float(previous_point)) > half_jump:
-            crosses += 1
-        previous_point = point
-
-    dot_count = int(crosses / 2)
+    dot_count = count_dots(img)
 
     # now remove dot(s)
     rows, cols = img.shape[0:2]
@@ -72,15 +82,18 @@ def findenemies(img):
         return pixel[0] == pixel[1] == pixel[2]
 
     # we know the enemies are colored pixels
-    R = img[:, :, 0].astype(int)
-    G = img[:, :, 1].astype(int)
-    B = img[:, :, 2].astype(int)
+    R = img[:, :, 0].astype(float)
+    G = img[:, :, 1].astype(float)
+    B = img[:, :, 2].astype(float)
 
-    M = (R + G + B) / 3
-    M = M.astype(int)
+    delta1 = np.abs(R - G)
+    delta2 = np.abs(R - B)
+    delta3 = np.abs(G - B)
+
+    delta = delta1 + delta2 + delta3
 
     # pixel coordinates of all enemies
-    ii_enemies = np.argwhere(M != R)
+    ii_enemies = np.argwhere(delta > 1)
 
     # return now if ii_enemies is empty
     if not ii_enemies.any():
@@ -177,10 +190,12 @@ def remove_background_gradient(gray_img):
     pfit_top = np.polyfit(xx_top, top_trace, 2)
     pfit_right = np.polyfit(xx_right, right_trace, 2)
 
-    for r in range(rows):
-        for c in range(cols):
-            offset = np.polyval(pfit_top, c)
-            sim_background[r, c] = np.polyval([pfit_right[0], pfit_right[1], offset], r)
+    fast_utils.gradient_helper(sim_background, pfit_top[0], pfit_top[1], pfit_top[2], pfit_right[0], pfit_right[1])
+    #print(sim_background[0, 1:10])
+    #for r in range(rows):
+    #    for c in range(cols):
+    #        offset = np.polyval(pfit_top, c)
+    #        sim_background[r, c] = np.polyval([pfit_right[0], pfit_right[1], offset], r)
 
     ave = np.mean(sim_background)
     sim_background -= ave
@@ -247,6 +262,16 @@ def prepare_image(img, do_plot = False):
             out_img = img_plevel1.copy()
         else:
             break
+
+    # so, the background gradient likely slightly tweaks the true enemy color
+    # and the removal of the gradient isn't going to be perfect, so some re-adjustment
+    # of the enemy colors is necessary
+    for (q, enemy) in enumerate(enemies):
+        other_enemies = [enemies[i] for i in np.setdiff1d(np.arange(0, len(enemies), 1), [q])]
+        for other_enemy in other_enemies:
+            tmp = np.abs(np.array(enemy.color).astype(float) - np.array(other_enemy.color).astype(float))
+            if np.max(tmp) <= 15:
+                other_enemy.color = enemy.color
 
     print(f'\nplayer dots: {player_dots}')
     print('list of enemies:')

@@ -126,3 +126,26 @@ def draw_skeleton(uint8[:, :, :] img, uint8[:, :, :] skeleton):
                 cimg[r, c, 2] = 0
 
     return img
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def gradient_helper(double[:, :] background, double a2, double a1, double a0, double b2, double b1):
+
+    cdef double offset
+    cdef int rows
+    cdef int cols
+    cdef double rd
+    cdef double cd
+    cdef double[:, :] cdata
+
+    cdata = background
+
+    rows, cols = background.shape[0:2]
+
+    for r in range(rows):
+        rd = float(r)
+        for c in range(cols):
+            cd = float(c)
+            offset = a2*cd**2 + a1*cd + a0
+            cdata[r, c] = b2*rd**2 + b1*rd + offset
