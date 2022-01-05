@@ -46,6 +46,7 @@ def simulate(points_list, **starting_points):
     counter = 0
     while all_owned(updated_list) is False:
         for player in head_points.items():
+            #need to remove old head point somehow
             player_name = player[0]
             for head_point_num in player[1]:
                 for point in updated_list:
@@ -53,14 +54,15 @@ def simulate(points_list, **starting_points):
                         neighbors = point["neighbors"]
                         for neighbor in neighbors:
                             for point in updated_list:
-                                if point["point_num"] == neighbor and point["owner"] is None:
+                                if point["owner"] is None and point["point_num"] == neighbor:
                                     point["owner"] = player_name #take ownership of point
-                                    print(f'counter = {counter}')
-                                    counter += 1
-                                    if counter >= 44:
-                                        debug = 1
+                                    head_points[player_name].append(point["point_num"]) #add newly owned point to head points
+                                    #print(f'counter = {counter}')
+                                    #counter += 1
+                                    #if counter >= 44:
+                                        #debug = 1                                    
+                head_points[player_name].remove(head_point_num) #remove old head points
 
-                        head_points[player_name] = [neighbor]
     return updated_list
 
 
@@ -90,10 +92,10 @@ def create_points_list(a):
 def main():
 
     user_start = [210, 210]
-    #red_start = [401, 175]
+    red_start = [401, 175]
     blue_start = [240, 240]
 
-    skelly = cv2.imread('circle.png')
+    skelly = cv2.imread('testbed.png')
 
     a = np.argwhere(skelly[:, :, 2] > 0)
 
@@ -112,7 +114,7 @@ def main():
     #print(type(a))
     coords_list = a.tolist()
     points_list = create_points_list(coords_list)
-    final_list = simulate(points_list, user=user_start, blue=blue_start)
+    final_list = simulate(points_list, user=user_start, red=red_start, blue=blue_start)
     scores = calc_scores(final_list, blue=0, red=0, user=0)
     print(scores)
 
