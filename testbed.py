@@ -2,7 +2,8 @@ import cv2
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-
+import copy
+import time
 
 def find_nearest(points_list, current_point):
     """Returns a list of the nearest point/s"""
@@ -19,7 +20,6 @@ def find_nearest(points_list, current_point):
                 closest[-1] = entry["point_num"]
     return [closest[0]]
 
-
 def all_owned(current_list):
     """Checks to see if all points are owned"""
     for entry in current_list:
@@ -27,44 +27,48 @@ def all_owned(current_list):
             return False
     return True
 
-
 def simulate(points_list, **starting_points):
     """Returns the final points list based on start coordinates"""
-    updated_list = points_list #initialize updated list
+    updated_list = copy.deepcopy(points_list) #initialize updated list
 
-    head_points = {} #mapping of players to current head point/s
-    for key, value in starting_points.items(): #initalize scores
-        head_points[key] = []
+    #none_count = False
+    owned = False
+    for point in updated_list:
+        if point["owner"] is not None:
+            owned = True
+            break
 
-    for key, value in starting_points.items(): #assign first round ownership
-        nearest_point = find_nearest(points_list, value)
-        for point in points_list:
-            if point["point_num"] == nearest_point[0]:
-                point["owner"] = key
-        head_points[key] = nearest_point #update head points
+    if not owned:
+        head_points = {} #mapping of players to current head point/s
+        for key, value in starting_points.items(): #initalize headpoints
+            head_points[key] = []
 
-    counter = 0
+        for key, value in starting_points.items(): #assign first round ownership
+            nearest_point = find_nearest(points_list, value)
+            for point in updated_list:
+                if point["point_num"] == nearest_point[0]:
+                    point["owner"] = key #assign owner
+                    break
+            head_points[key] = nearest_point #update head points
+
     while all_owned(updated_list) is False:
+    #while True:
         for player in head_points.items():
-            #need to remove old head point somehow
             player_name = player[0]
             for head_point_num in player[1]:
                 for point in updated_list:
                     if point["point_num"] == head_point_num:
-                        neighbors = point["neighbors"]
-                        for neighbor in neighbors:
+                        for neighbor in point["neighbors"]:
                             for point in updated_list:
                                 if point["owner"] is None and point["point_num"] == neighbor:
                                     point["owner"] = player_name #take ownership of point
-                                    head_points[player_name].append(point["point_num"]) #add newly owned point to head points
-                                    #print(f'counter = {counter}')
-                                    #counter += 1
-                                    #if counter >= 44:
-                                        #debug = 1                                    
+                                    owned += 1
+                                    head_points[player_name].append(point["point_num"]) #add newly owned point to head points                                   
                 head_points[player_name].remove(head_point_num) #remove old head points
-
+        #print(none_count)
+        #if none_count <= 0:
+            #break
     return updated_list
-
 
 def calc_scores(final_list, **player_names):
     """Totals the point ownership and returns the score"""
@@ -91,13 +95,55 @@ def create_points_list(a):
 
 def main():
 
-    user_start = [210, 210]
-    red_start = [401, 175]
-    blue_start = [240, 240]
-
-    skelly = cv2.imread('testbed.png')
+    img = 'testbed.png'
+    skelly = cv2.imread(img)
 
     a = np.argwhere(skelly[:, :, 2] > 0)
+
+    coords_list = a.tolist()
+    points_list = create_points_list(coords_list)
+
+    #start = timeit.timeit()
+    #final_list = simulate(points_list, user=user_start, red=red_start, blue=blue_start)
+    #end = timeit.timeit()
+    #print(f'It took {elapsed} seconds to complete the simulate function on {img}.')
+
+    #scores = calc_scores(final_list, blue=0, red=0, user=0)
+    #print(scores)
+    #for key, value in scores.items():
+        #sum = sum + value
+    #print(f'Total points = {sum}')
+    
+    #user_start = [10, 210]
+    red_start = [40, 175]
+    blue_start = [20, 240]
+
+    #brute force algorithm
+    max_score = 0
+    max_score_coords = []
+    counter = 0
+    now = time.time()
+    for point in points_list:
+        counter += 1
+        print(counter)
+        if point["coords"] != red_start or blue_start: #can i do 'or' statement like this?
+            user_coords = point["coords"]
+            final_list = simulate(points_list, user=user_coords, red=red_start, blue=blue_start)
+            scores = calc_scores(final_list, blue=0, red=0, user=0)
+            user_score = scores["user"]
+            if user_score > max_score:
+                max_score = user_score
+                max_score_coords = user_coords
+            
+        #need to clear out ownership point next round of simulate (trying with copy in simulator)
+    then = time.time()
+    elapsed = then - now
+    print(f'Best coordinates to choose are {max_score_coords} resulting in a score of {max_score} and it took {elapsed} seconds')
+
+if __name__ == '__main__':
+
+    main()
+
 
     # b = [{'point_num': (n+1), 'coords': a[n], 'owner': None, 'neighbor': []} for n in range(len(a))]
     #b = [{'point_num': (n + 1), 'coords': [a[n][0], a[n][1]], 'owner': None, 'neighbors': []} for n in range(len(a))]
@@ -112,14 +158,3 @@ def main():
         #b[k]['neighbors'] = list(ii[i_neighbors])
 
     #print(type(a))
-    coords_list = a.tolist()
-    points_list = create_points_list(coords_list)
-    final_list = simulate(points_list, user=user_start, red=red_start, blue=blue_start)
-    scores = calc_scores(final_list, blue=0, red=0, user=0)
-    print(scores)
-
-
-if __name__ == '__main__':
-
-    main()
-
