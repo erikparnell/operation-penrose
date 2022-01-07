@@ -28,8 +28,9 @@ if __name__ == '__main__':
     cv2.floodFill(img, mask, (ii_track[0][1], ii_track[0][0]), unclaimed_track_color, flags=8 | (255 << 8))
 
     # the user is technically a player
-    user = Enemy([0, 255, 0], location=[626, 1195])
+    #user = Enemy([0, 255, 0], location=[626, 1195])
     #user = Enemy([0, 255, 0], location=[490, 1202])
+    user = Enemy([0, 255, 0], location=[96, 1268])
     players = list(enemies)
     players.append(user)
 
@@ -40,7 +41,7 @@ if __name__ == '__main__':
 
     height, width = skelly.shape[0:2]
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # works and file size is much smaller
-    fps = 360
+    fps = 500
     img_for_vid = img.copy()
     vid_out = cv2.VideoWriter('video.avi', fourcc, fps, (width, height))
     #vid_out = cv2.VideoWriter('video.avi', fourcc, fps, (int(width/2), int(height/2))) # doesn't seem to work
@@ -69,6 +70,5 @@ if __name__ == '__main__':
 
     vid_out.release()
 
-    print('done')
-    #plt.imshow(img)
-    #plt.show()
+    plt.imshow(img)
+    plt.show()
