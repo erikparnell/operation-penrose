@@ -11,6 +11,8 @@ class Enemy:
         self.color = color
         self.location = location
         self.score = 0
+        self.active_points = [location]
+        self.captured_points = []  # used for simulator/video-maker
 
 
 def count_dots(img):

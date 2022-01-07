@@ -127,7 +127,6 @@ def draw_skeleton(uint8[:, :, :] img, uint8[:, :, :] skeleton):
 
     return img
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def gradient_helper(double[:, :] background, double a2, double a1, double a0, double b2, double b1):
@@ -149,3 +148,62 @@ def gradient_helper(double[:, :] background, double a2, double a1, double a0, do
             cd = float(c)
             offset = a2*cd**2 + a1*cd + a0
             cdata[r, c] = b2*rd**2 + b1*rd + offset
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def simulate_helper(uint8[:, :, :] img, uint8[:, :] player_colors, uint16[:, :] active_points_x, uint16[:, :] active_points_y, uint16[:, :] active_points_x2, uint16[:, :] active_points_y2):
+
+    cdef int keep_going = 1
+    cdef int dxx[8]
+    cdef int dyy[8]
+    cdef int dx 
+    cdef int dy 
+    cdef int n_active_points[100] # assumes you'll never have more than 100 players  
+    cdef int n2_active_points[100]
+    cdef uint8[:, :, :] cimg = img
+    cdef uint8[:, :] cplayer_colors = player_colors
+    cdef uint16[:, :] cactive_points_x = active_points_x
+    cdef uint16[:, :] cactive_points_y = active_points_y
+    cdef uint16[:, :] cactive_points_x2 = active_points_x2
+    cdef uint16[:, :] cactive_points_y2 = active_points_y2
+    cdef int n_players
+    cdef int n 
+    cdef int a 
+    cdef int p 
+    cdef int k
+    cdef int q
+    cdef int point[2]
+    cdef int pixel[3]
+
+    n_players = player_colors.shape[0]
+
+    # initial number of active points for each player
+    for n in range(n_players):
+        n_active_points[n] = 1
+
+    dxx[:] = [1, 1, 0, -1, -1, -1, 0, 1]
+    dyy[:] = [0, 1, 1, 1, 0, -1, -1, -1]
+
+    while keep_going > 0:
+        keep_going = -1
+        for p in range(n_players): # a particular player
+            n2_active_points[p] = 0 # new active points TBD
+            for a in range(n_active_points[p]): # number of active points for this player
+                keep_going = 1
+                point[0] = cactive_points_x[a, p]
+                point[1] = cactive_points_y[a, p]
+                for k in range(8):
+                    dx = dxx[k]
+                    dy = dyy[k]
+                    for q in range(3):
+                        pixel[q] = cimg[point[0] + dx, point[1] + dy, q]
+                    if pixel[0] == 200 and pixel[1] == 200 and pixel[2] == 200:
+                        cactive_points_x2[n2_active_points[p], p] = point[0] + dx
+                        cactive_points_y2[n2_active_points[p], p] = point[1] + dy
+                        for q in range(3):
+                            cimg[point[0] + dx, point[1] + dy, q] = player_colors[p, q]
+                        n2_active_points[p] += 1
+            n_active_points[p] = n2_active_points[p]
+            for a in range(n2_active_points[p]):
+                cactive_points_x[a, p] = cactive_points_x2[a, p]
+                cactive_points_y[a, p] = cactive_points_y2[a, p]
