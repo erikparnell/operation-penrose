@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     height, width = skelly.shape[0:2]
     fourcc = cv2.VideoWriter_fourcc(*'XVID')  # works and file size is much smaller
-    fps = 500
+    fps = 180
     img_for_vid = img.copy()
     vid_out = cv2.VideoWriter('video.avi', fourcc, fps, (width, height))
     #vid_out = cv2.VideoWriter('video.avi', fourcc, fps, (int(width/2), int(height/2))) # doesn't seem to work
@@ -49,6 +49,7 @@ if __name__ == '__main__':
     # play out this setup
     keep_going = True
     while keep_going:
+        vid_out.write(img_for_vid)
         keep_going = False
         for player in players:
             r, g, b = player.color
@@ -63,8 +64,7 @@ if __name__ == '__main__':
                         img[active_point[0] + dx, active_point[1] + dy, :] = [player.color[2], player.color[1],
                                                                               player.color[0]]
                         player.captured_points.append([active_point[0] + dx, active_point[1] + dy])
-                        tmp_img = cv2.circle(img_for_vid, (active_point[1] + dy, active_point[0] + dx), 5, (int(r), int(g), int(b)), -1)
-                        vid_out.write(tmp_img)
+                        cv2.circle(img_for_vid, (active_point[1] + dy, active_point[0] + dx), 5, (int(r), int(g), int(b)), -1)
 
             player.active_points = new_active_points
 
