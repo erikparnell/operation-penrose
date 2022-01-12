@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import copy
 import time
 
+
 def find_nearest(points_list, current_point):
     """Returns a list of the nearest point/s"""
     closest = []
@@ -20,12 +21,14 @@ def find_nearest(points_list, current_point):
                 closest[-1] = entry["point_num"]
     return [closest[0]]
 
+
 def all_owned(current_list):
     """Checks to see if all points are owned"""
     for entry in current_list:
         if entry["owner"] is None:
             return False
     return True
+
 
 def simulate(points_list, **starting_points):
     """Returns the final points list based on start coordinates"""
@@ -70,6 +73,7 @@ def simulate(points_list, **starting_points):
             #break
     return updated_list
 
+
 def calc_scores(final_list, **player_names):
     """Totals the point ownership and returns the score"""
     scores = player_names
@@ -77,6 +81,7 @@ def calc_scores(final_list, **player_names):
         if point["owner"] in player_names:
             scores[point["owner"]] = scores[point["owner"]] + 1
     return scores
+
 
 def create_points_list(a):
     """Converts skeleton list to templated dict including neighboring points"""
@@ -92,6 +97,7 @@ def create_points_list(a):
                 neighbors.append(oth_point["point_num"])
         point['neighbors'] = neighbors
     return points_list
+
 
 def main():
 
@@ -140,9 +146,38 @@ def main():
     elapsed = then - now
     print(f'Best coordinates to choose are {max_score_coords} resulting in a score of {max_score} and it took {elapsed} seconds')
 
+
+def dantooine():
+    # Dan's little world of some light mods to the code in def main
+
+    # data created and saved in main.py
+    skelly = cv2.imread('skelly.png')
+    enemies = np.load('enemies.npy', allow_pickle=True)
+
+    ii_track = np.argwhere((skelly[:, :, 0] == 255) * (skelly[:, :, 1] == 0))
+    points_list = [{'point_num': (n + 1), 'coords': [ii_track[n][0], ii_track[n][1]], 'owner': None,
+                    'neighbors': []} for n in range(len(ii_track))]
+
+    # populate neighbors by using skelly as a lookup table
+    neighbors = [[0, 0]]*8  # you'll never have more than 8 neighbors
+    for point in points_list:
+        neighbor_count = 0
+        for (dx, dy) in zip([1, 1, 0, -1, -1, -1, 0, 1], [0, 1, 1, 1, 0, -1, -1, -1]):
+            x, y = point['coords']
+            pixel = skelly[x + dx, y + dy, :]
+            if pixel[0] == 255 and pixel[1] == 0 and pixel[2] == 0:
+                neighbors[neighbor_count] = [x + dx, y + dy]
+                neighbor_count += 1
+        point['neighbors'] = neighbors[0:neighbor_count]
+
+
+    dbg = 1
+
+
 if __name__ == '__main__':
 
-    main()
+    #main()
+    dantooine()
 
 
     # b = [{'point_num': (n+1), 'coords': a[n], 'owner': None, 'neighbor': []} for n in range(len(a))]

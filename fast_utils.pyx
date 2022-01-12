@@ -151,7 +151,7 @@ def gradient_helper(double[:, :] background, double a2, double a1, double a0, do
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def simulate_helper(uint8[:, :, :] img, uint8[:, :] player_colors, uint16[:, :] active_points_x, uint16[:, :] active_points_y, uint16[:, :] active_points_x2, uint16[:, :] active_points_y2):
+def solver_helper(uint8[:, :, :] img, uint8[:, :] player_colors, uint16[:, :] active_points_x, uint16[:, :] active_points_y, uint16[:, :] active_points_x2, uint16[:, :] active_points_y2):
 
     cdef int keep_going = 1
     cdef int dxx[8]

@@ -28,9 +28,9 @@ if __name__ == '__main__':
     cv2.floodFill(img, mask, (ii_track[0][1], ii_track[0][0]), unclaimed_track_color, flags=8 | (255 << 8))
 
     # the user is technically a player
-    #user = Enemy([0, 255, 0], location=[626, 1195])
+    user = Enemy([0, 255, 0], location=[626, 1195])
     #user = Enemy([0, 255, 0], location=[490, 1202])
-    user = Enemy([0, 255, 0], location=[96, 1268])
+    #user = Enemy([0, 255, 0], location=[96, 1268])
     players = list(enemies)
     players.append(user)
 

@@ -248,11 +248,17 @@ def imageprep2(img):
     return img_out
 
 
-def prepare_image(img, do_plot = False):
+def prepare_image(img, image_scale_factor=1, do_plot=False):
 
     img_orig = img.copy()
 
     img_plevel1, player_dots = imageprep1(img)
+
+    if image_scale_factor < 1:
+        height, width = img.shape[0:2]
+        new_height = int(image_scale_factor * height)
+        new_width = int(image_scale_factor * width)
+        img_plevel1 = cv2.resize(img_plevel1, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
     out_img = img_plevel1.copy()
     enemies = []
